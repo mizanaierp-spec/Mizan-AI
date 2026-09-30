@@ -1,54 +1,61 @@
-const express = require('express');
-const router = express.Router();
 const db = require('../../config/database');
 const { auth } = require('../../middleware/auth');
+const express = require('express');
+const router = express.Router();
 
 router.get('/trial-balance', auth, async (req, res) => {
   try {
     const { company_id, period_id } = req.query;
+    const companyId = company_id || req.user.company_id;
+    if (!companyId) return res.status(400).json({ success: false, message: 'company_id required' });
 
     const result = await db.query(
-      `SELECT
-         coa.account_code,
-         coa.account_name,
-         coa.account_type,
-         COALESCE(SUM(CASE WHEN jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS debit,
-         COALESCE(SUM(CASE WHEN jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS credit
-       FROM chart_of_accounts coa
-       LEFT JOIN journal_lines jl ON coa.id = jl.account_id
-       LEFT JOIN journal_entries je ON jl.entry_id = je.id
-       WHERE coa.company_id = $1 AND je.period_id = $2
-       GROUP BY coa.id, coa.account_code, coa.account_name, coa.account_type
-       ORDER BY coa.account_code`,
-      [company_id, period_id]
+      `SELECT 
+        coa.id,
+        coa.account_code,
+        coa.account_name,
+        COALESCE(SUM(CASE WHEN jl.debit > 0 THEN jl.debit ELSE 0 END), 0) as debit,
+        COALESCE(SUM(CASE WHEN jl.credit > 0 THEN jl.credit ELSE 0 END), 0) as credit
+      FROM chart_of_accounts coa
+      LEFT JOIN journal_lines jl ON jl.account_id = coa.id
+      LEFT JOIN journal_entries je ON je.id = jl.entry_id
+      WHERE coa.company_id = $1 AND (je.status = 'posted' OR je.status IS NULL)
+      GROUP BY coa.id, coa.account_code, coa.account_name
+      ORDER BY coa.account_code`,
+      [companyId]
     );
+    
+    const totals = {
+      debit: result.rows.reduce((sum, row) => sum + Number(row.debit || 0), 0),
+      credit: result.rows.reduce((sum, row) => sum + Number(row.credit || 0), 0)
+    };
 
-    res.json({ success: true, data: result.rows });
+    res.json({ success: true, data: { accounts: result.rows, totals } });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-router.get('/profit-loss', auth, async (req, res) => {
+router.get('/general-ledger', auth, async (req, res) => {
   try {
-    const { company_id, period_id } = req.query;
+    const { company_id, account_id } = req.query;
+    const companyId = company_id || req.user.company_id;
+    if (!companyId) return res.status(400).json({ success: false, message: 'company_id required' });
 
-    const result = await db.query(
-      `SELECT
-         coa.account_type,
-         coa.account_name,
-         COALESCE(SUM(CASE WHEN coa.account_type IN ('revenue', 'income') THEN jl.credit - jl.debit
-                          WHEN coa.account_type IN ('expense', 'cost') THEN jl.debit - jl.credit
-                          ELSE 0 END), 0) AS amount
-       FROM chart_of_accounts coa
-       LEFT JOIN journal_lines jl ON coa.id = jl.account_id
-       LEFT JOIN journal_entries je ON jl.entry_id = je.id
-       WHERE coa.company_id = $1 AND je.period_id = $2
-       GROUP BY coa.account_type, coa.account_name
-       ORDER BY coa.account_type, coa.account_name`,
-      [company_id, period_id]
-    );
+    let sql = `SELECT jl.*, coa.account_code, coa.account_name, je.description, je.entry_date
+               FROM journal_lines jl
+               JOIN chart_of_accounts coa ON coa.id = jl.account_id
+               JOIN journal_entries je ON je.id = jl.entry_id
+               WHERE coa.company_id = $1`;
+    const params = [companyId];
 
+    if (account_id) {
+      params.push(account_id);
+      sql += ` AND jl.account_id = $${params.length}`;
+    }
+
+    sql += ' ORDER BY je.entry_date DESC';
+    const result = await db.query(sql, params);
     res.json({ success: true, data: result.rows });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

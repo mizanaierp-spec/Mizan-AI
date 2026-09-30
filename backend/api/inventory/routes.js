@@ -3,13 +3,13 @@ const { auth, authorize } = require('../../middleware/auth');
 const express = require('express');
 const router = express.Router();
 
-router.get('/accounts', auth, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const companyId = req.query.company_id || req.user.company_id;
     if (!companyId) return res.status(400).json({ success: false, message: 'company_id required' });
     
     const result = await db.query(
-      'SELECT * FROM bank_accounts WHERE company_id = $1 ORDER BY bank_name',
+      'SELECT * FROM inventory_items WHERE company_id = $1 ORDER BY item_code',
       [companyId]
     );
     res.json({ success: true, data: result.rows });
@@ -18,15 +18,17 @@ router.get('/accounts', auth, async (req, res) => {
   }
 });
 
-router.post('/accounts', auth, authorize(['admin', 'accountant']), async (req, res) => {
+router.post('/', auth, authorize(['admin', 'manager']), async (req, res) => {
   try {
-    const { company_id, bank_name, account_number, account_holder, currency = 'SAR' } = req.body;
-    if (!company_id || !bank_name) return res.status(400).json({ success: false, message: 'Missing required fields' });
+    const { company_id, item_code, item_name, unit, category } = req.body;
+    if (!company_id || !item_code || !item_name) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
     
     const result = await db.query(
-      `INSERT INTO bank_accounts (company_id, bank_name, account_number, account_holder, currency)
+      `INSERT INTO inventory_items (company_id, item_code, item_name, unit, category)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [company_id, bank_name, account_number || null, account_holder || null, currency]
+      [company_id, item_code, item_name, unit || null, category || null]
     );
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
@@ -34,4 +36,4 @@ router.post('/accounts', auth, authorize(['admin', 'accountant']), async (req, r
   }
 });
 
-module.exports = router;
+module.module = router;
