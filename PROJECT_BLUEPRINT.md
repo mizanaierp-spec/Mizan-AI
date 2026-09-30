@@ -1,4 +1,4 @@
-# Mizan AI - Blueprint for the Accounting System
+# 🏗️ Mizan AI - Project Blueprint
 
 ## 1. Project Objective
 Mizan AI is a complete accounting and enterprise management system designed to support all core accounting operations, financial reporting, inventory, payroll, assets, banking, taxes, and user control with a safe AI layer.
@@ -8,7 +8,7 @@ Mizan AI is a complete accounting and enterprise management system designed to s
 ### 2.1 Basic Accounting
 - Chart of accounts
 - Debits and credits
-- Daily journal entries
+- Daily journal entries with automatic balance validation
 - Trial balance
 - General ledger
 - Profit and loss statement
@@ -20,59 +20,70 @@ Mizan AI is a complete accounting and enterprise management system designed to s
 - Customer and supplier accounts
 - Sales invoices and purchase invoices
 - Returns and allowances
-- Payment tracking
-- Tax handling
-- Multi-currency support
+- Payment tracking (paid vs. remaining)
+- Tax handling (with exemptions)
+- Multi-currency support with exchange rates
 
 ### 2.3 Cash and Banking
-- Cash boxes and bank accounts
+- Cash boxes management
+- Bank accounts
 - Deposits, withdrawals, and transfers
-- Reconciliation
+- Reconciliation (actual vs. accounting balances)
 - Bank statement matching
-- Actual versus accounting balances
 
 ### 2.4 Inventory Management
 - Items and categories
 - Warehouses and stock transfers
 - Incoming and outgoing movements
-- Inventory counts and stock adjustments
-- Costing methods
+- Inventory counts (periodic and surprise)
+- Stock adjustments
+- Costing methods (weighted average, FIFO)
 - Reorder level alerts
+- Movement tracking tied to invoices
 
 ### 2.5 Payroll and Human Resources
-- Employee records
-- Salary, allowances, and deductions
+- Employee records with full details
+- Salary calculation
+- Allowances and deductions
 - Payroll processing
 - Net salary calculation
 - Payroll postings to accounting
+- Tax on payroll
 
 ### 2.6 Fixed Assets
-- Asset registration
+- Asset registration and register
 - Depreciation calculation
 - Accumulated depreciation
-- Disposal and sale of asset
+- Disposal and sale of assets
 - Related journal entries
+- Asset reports
 
 ### 2.7 Advances and Custody
-- Advance payments
-- Cash advances and settlement
-- Custody tracking
+- Advance payments issued
+- Settlement of advances
+- Cash custody tracking
 - Remaining balances
+- Return of custody
 
 ### 2.8 Taxes and Legal Compliance
 - Tax settings per company
+- Tax exemptions
 - Tax on items and invoices
 - Tax reports
 - Return and tax adjustment handling
+- Tax ID
 
 ### 2.9 Audit and Security
-- User activity log
+- Complete user activity log
 - Who created, modified, posted, cancelled, or reversed entries
 - Before and after values
 - Access control and role restrictions
 - AI action logging
+- Operation timestamps
 
 ## 3. Roles and Permissions
+
+11 distinct roles:
 - System administrator
 - Company manager
 - Accountant
@@ -81,126 +92,180 @@ Mizan AI is a complete accounting and enterprise management system designed to s
 - Warehouse manager
 - HR
 - Cashier
-- Auditor
+- Auditor/Monitor
 - Read-only user
 - AI agent
 
 Each action must be validated by:
-- User authentication
+- User authentication (JWT)
 - Role permissions
 - Data validation
 - Business rules
-- Approval confirmation
+- Approval confirmation (for sensitive actions)
 
 ## 4. Smart AI Layer
-The AI assistant must be treated as a controlled execution layer, not as a superuser.
 
-### AI Rules
+The AI assistant must be treated as a controlled execution layer, NOT as a superuser.
+
+### AI Safety Requirements
 - Read data from the database only when allowed
 - Analyze reports and answer accounting questions
-- Execute only permitted operations
+- Execute only permitted operations for the user's role
 - Never create an unbalanced journal entry
-- Log all AI actions in detail
+- Log all AI actions in detail (what, who, when, why)
 - Require user confirmation before any sensitive action
 - Must validate user rights before execution
+- Strictly respect user permissions
 
-### AI Safety Flow
+### AI Execution Flow
+```
 User Request
--> Understand request
--> Check permissions
--> Validate business data
--> Preview operation
--> Ask for confirmation
--> Create transaction
--> Post journal entry
--> Audit log
+  ↓
+Natural Language Processing
+  ↓
+Intent Recognition
+  ↓
+Permission Check (user rights vs. operation)
+  ↓
+Business Data Validation
+  ↓
+Accounting Rule Validation
+  ↓
+Preview Operation (show what will happen)
+  ↓
+Ask for User Confirmation
+  ↓
+Create Transaction
+  ↓
+Post Journal Entry (balanced)
+  ↓
+Audit Log Entry
+  ↓
+Response to User
+```
 
 ## 5. Accounting Validation Rules
-- Journal must be balanced
-- Edit is not allowed after closure unless authorized
-- Closing period requires manager approval
-- Automatic safe numbering for journal entries under concurrency
+
+- Journal must always be balanced (Debit = Credit)
+- Cannot edit a posted entry after period closure unless authorized
+- Closing period requires manager approval only
+- Automatic safe numbering for journal entries (handle concurrency)
 - Reversal entries must be used instead of deleting posted entries
+- Cannot delete an invoice once posted
+- Cannot delete an inventory movement once posted
 
 ## 6. Financial Consistency Checks
-The system must automatically validate:
-- General ledger balances
-- Trial balance
-- Profit and loss statement
-- Balance sheet
-- Assets = Liabilities + Equity
-- Net profit impact on equity
+
+The system must automatically validate and ensure:
+- General ledger balances equal account balances
+- Trial balance sums = general ledger totals
+- Profit and loss statement = income - expenses
+- Balance sheet: Assets = Liabilities + Equity
+- Net profit from P&L = change in equity
+- All journal entries are balanced
+- Inventory COGS tied to cost of goods sold
 
 ## 7. Banking and Reconciliation
+
 - Reconcile actual bank statements against accounting records
-- Identify variances
-- Allow manual matching and adjustments
-- Track reconciliation status
+- Identify variances and discrepancies
+- Manual matching and variance adjustments
+- Track reconciliation status (pending, matched, cleared)
+- Report reconciliation differences
+- Aging of outstanding items
 
 ## 8. Inventory Controls
-- Multiple warehouses
+
+- Support multiple warehouses
 - Stock transfer between warehouses
 - Periodic and surprise stock counts
-- Stock variance settlement
-- FIFO / weighted average support
-- Inventory movements tied to invoices
+- Stock variance settlement and adjustments
+- Support FIFO and weighted average costing
+- Inventory movements tied to source documents (invoices)
+- Reorder point and reorder quantity
 
 ## 9. Reporting Requirements
-- Daily reports
-- General ledger
-- Aging reports
-- Customer and supplier reports
-- Cash flow
-- Expenses
-- Sales and purchases
-- Inventory
-- Payroll
-- Assets
-- Printable and exportable reports
+
+### Daily/Monthly Reports
+- Daily operations report
+- General ledger (detail by account)
+- Trial balance
+- Aging reports (customers and suppliers)
+- Customer and supplier statements
+- Cash flow statement
+- Expense report
+- Sales and purchase report
+- Inventory status report
+- Payroll report
+- Asset register and depreciation
+
+### Financial Statements
+- Profit and loss statement
+- Balance sheet
+- Cash flow statement
+- Trial balance
+
+### Export Formats
+- PDF (printable, Arabic/English)
+- Excel with formatting
+- CSV for import
 
 ## 10. Backup and Recovery
+
 - Automatic daily backups
-- Retention of multiple backup versions
-- Restore testing
+- Retention of multiple backup versions (at least 30 days)
+- Restore testing procedure
 - Ensure backups do not overwrite live production data
+- Backup encryption
+- Backup verification
 
 ## 11. Production Security
-- Rate limiting
-- Session management
+
+- Rate limiting on API endpoints
+- Session management (timeout, logout)
 - Password reset and change flow
-- Optional 2FA
-- Security headers
-- Encryption for sensitive data
+- Optional 2FA (TOTP)
+- Security headers (HSTS, CSP, X-Frame-Options, etc.)
+- Encryption for sensitive data (passwords, API keys)
 - Environment secret management
-- Attack logging and login monitoring
+- Attack logging (failed login attempts, suspicious activity)
+- Login monitoring and alerts
+- API key rotation
+- HTTPS/SSL enforcement
 
 ## 12. Performance and Scale
-- Indexes on all major database fields
-- Pagination
-- Query optimization
-- Caching for heavy reports
-- Background jobs for long-running tasks
-- Monitor database, API, and AI usage
+
+- Database indexes on all major fields
+- Query optimization (avoid N+1 queries)
+- Pagination on large datasets
+- Caching for heavy reports (Redis)
+- Background jobs for long-running tasks (batch payroll, EOD reports)
+- Database connection pooling
+- Monitor database performance, API latency, AI usage
+- Load testing capability
 
 ## 13. Core Data Model
+
 Main entities:
-- Company
+- Company (multi-company support)
 - User
 - Role
 - Permission
 - ChartOfAccounts
-- Account
-- JournalEntry
-- JournalLine
+- Account (with parent-child hierarchy)
+- JournalEntry (master)
+- JournalLine (detail)
 - Customer
 - Supplier
-- Invoice
+- Invoice (sales and purchase)
+- InvoiceLine
 - Payment
 - InventoryItem
 - Warehouse
 - InventoryMovement
 - Employee
 - Payroll
+- PayrollLine
 - FixedAsset
 - Depreciation
 - CashBox
@@ -211,92 +276,167 @@ Main entities:
 - AuditLog
 - BackupRecord
 
-## 14. Initialization Flow for a New Company
+## 14. Initialization Flow for New Company
+
+```
 1. Create company
 2. Configure chart of accounts
 3. Create warehouses
 4. Create items
 5. Create customers and suppliers
 6. Create bank and cash accounts
-7. Purchase inventory
-8. Sell goods/services
-9. Collect and pay
-10. Record payroll
-11. Manage fixed assets
-12. Run inventory counts
-13. Close monthly period
-14. Generate reports
-15. Verify balances
+7. Record opening balances
+8. Purchase inventory
+9. Sell goods/services
+10. Collect payments
+11. Pay suppliers
+12. Record payroll
+13. Manage fixed assets
+14. Run inventory counts
+15. Close monthly period
+16. Generate financial reports
+17. Verify all balances match
+```
 
 ## 15. Acceptance Tests
-The system must pass scenarios including:
-- Sale on credit
-- Purchase from supplier
-- Payment collection
-- Payment to supplier
-- Payroll posting
-- Fixed asset purchase and depreciation
-- Inventory movement and cost impacts
-- Bank reconciliation
-- Closing period
-- Financial report consistency
+
+The system must pass comprehensive scenarios:
+
+### Scenario 1: Sale on Credit
+- Create sales invoice → customer becomes debtor
+- Revenue recognized
+- Inventory decreased
+- COGS increased
+- Tax calculated correctly
+- All journal entries balanced
+- P&L and balance sheet updated
+- Trial balance still balanced
+
+### Scenario 2: Purchase and Payment
+- Create purchase invoice → supplier becomes creditor
+- Inventory increased
+- Tax calculated
+- Payment issued → supplier account settled
+- All journal entries balanced
+
+### Scenario 3: Inventory and Costing
+- Purchases at different prices
+- Sales with correct costing method
+- Inventory valued correctly
+- COGS accurate
+- Balance sheet reflects correct inventory value
+
+### Scenario 4: Bank Reconciliation
+- Record deposits and withdrawals
+- Reconcile with actual bank statement
+- Identify and resolve discrepancies
+- Aging of outstanding items
+
+### Scenario 5: Payroll
+- Create employee with salary structure
+- Calculate payroll (salary + allowances - deductions)
+- Generate payroll posting
+- Create journal entry for expenses
+- Payroll liability tracked
+- Tax implications recorded
+
+### Scenario 6: Fixed Assets
+- Purchase asset
+- Calculate monthly depreciation
+- Accumulated depreciation tracked
+- Sale of asset → gain/loss recognized
+- Journal entries created automatically
+
+### Scenario 7: Period Closure
+- Close month after all transactions
+- Verify trial balance
+- Lock period (no more edits)
+- Verify P&L ties to balance sheet
+- Verify Assets = Liabilities + Equity
+
+### Scenario 8: AI Operations
+- User asks AI to record a sale
+- AI checks permissions
+- AI previews the operation
+- AI asks for confirmation
+- AI executes and logs everything
+- User can see audit trail
 
 ## 16. Target Technical Stack
-Recommended stack for production:
-- Frontend: React / Next.js / Vite
-- Backend: Node.js / NestJS / Express
-- Database: PostgreSQL
-- Cache/Queue: Redis
-- Authentication: JWT + bcrypt
-- AI: LLM with strict validation layer
-- Reporting: PDF/Excel export
-- Deployment: Railway/Vercel/Docker
 
-## 17. Initial Delivery Priorities
-Phase 1
+Recommended for production:
+- **Frontend**: React 18 / Next.js 14 / Vite
+- **Backend**: Node.js 18+ / Express / NestJS
+- **Database**: PostgreSQL 14+
+- **Cache/Queue**: Redis 7+
+- **Authentication**: JWT + bcrypt
+- **AI**: LLM API (OpenAI/Local) with validation layer
+- **Reporting**: PDF (pdfkit), Excel (xlsx)
+- **Deployment**: Railway / Docker / Kubernetes
+- **Monitoring**: Prometheus / Grafana / ELK Stack
+- **Testing**: Jest / Mocha / Chai
+
+## 17. Implementation Phases
+
+### Phase 1: Core Accounting (Weeks 1-4)
 - Company setup
+- User and role management
 - Chart of accounts
-- Users and roles
-- Journal entries
-- Trial balance
-- General ledger
-- Profit and loss
+- Journal entries with balance validation
+- Trial balance and general ledger
+- Profit and loss statement
 - Balance sheet
+- Basic audit logging
 
-Phase 2
-- Sales and purchases
-- Cash and banking
-- Inventory and stock movement
-- Payroll
+### Phase 2: Sales/Purchases & Inventory (Weeks 5-8)
+- Sales and purchase invoices
+- Inventory management
+- Warehouse operations
+- Stock movements and costing
+- Returns handling
+- Tax integration
 
-Phase 3
-- Assets, banking reconciliation, advanced reports, AI assistant
+### Phase 3: Banking & Cash (Weeks 9-11)
+- Cash box management
+- Bank accounts
+- Reconciliation
+- Payments and collections
+- Bank statement matching
 
-Phase 4
-- Security hardening, backup, performance tuning, multi-company support
+### Phase 4: Payroll & Assets (Weeks 12-14)
+- Employee management
+- Payroll processing
+- Fixed assets
+- Depreciation calculation
+- Asset register
 
-## 18. Output Expectations
-The final system must be:
-- Finance-safe
-- Audit-friendly
-- Role-aware
-- AI-controlled but permission-limited
-- Production-ready
-- Accurate in accounting logic
-- Fully testable
+### Phase 5: AI & Security (Weeks 15-16)
+- AI chatbot with safety layer
+- Advanced reporting
+- Security hardening
+- Performance optimization
+- Comprehensive testing
 
-## 19. Recommended Next Step
-Start with the accounting core modules first:
-- Company and user setup
-- Chart of accounts
-- Journal entries and validation
-- Trial balance and ledger
-- Financial reports
+## 18. Definition of Done
 
-Then add modules progressively:
-- Sales/Purchases
-- Inventory
-- Payroll
-- Cash and bank
-- Assets
-- AI assistant
+Before marking the system "Production Ready":
+- ✅ All core modules tested
+- ✅ Comprehensive integration tests pass
+- ✅ Full end-to-end scenario works
+- ✅ Security audit complete
+- ✅ Performance tested at scale
+- ✅ Backup and restore tested
+- ✅ Documentation complete
+- ✅ Training materials prepared
+- ✅ Support procedures established
+
+## 19. Success Criteria
+
+- 100% journal entries are balanced
+- All reports reconcile and are accurate
+- No data loss during operations
+- Response time < 500ms for most queries
+- Audit trail captures all changes
+- Permissions are enforced strictly
+- AI never violates permissions
+- System passes all acceptance tests
