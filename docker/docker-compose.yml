@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: mizan-ai-api
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: mizan_ai
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: changeme
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: mizan-ai-db
+    environment:
+      POSTGRES_DB: mizan_ai
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: mizan-ai-redis
+    ports:
+      - '6379:6379'
+
+volumes:
+  pgdata:
