@@ -1,0 +1,16 @@
+[Unit]
+Description=Mizan AI - Intelligent Accounting System
+After=network.target
+
+[Service]
+Type=simple
+User=mizan
+WorkingDirectory=/opt/mizan-ai
+ExecStart=/usr/bin/node /opt/mizan-ai/backend/server.js
+Restart=always
+RestartSec=10
+Environment="NODE_ENV=production"
+EnvironmentFile=/opt/mizan-ai/.env
+
+[Install]
+WantedBy=multi-user.target
