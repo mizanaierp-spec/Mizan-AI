@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mizan-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mizan_db
+      POSTGRES_USER: mizan
+      POSTGRES_PASSWORD: mizan123
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: mizan-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+
+volumes:
+  pgdata:
